@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Medicine Reminder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 25px;
+            background-color: #f5f7fa;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            color: #333;
+        }
+
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        input, button {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 5px #3498db; }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover { background-color: #2980b9; }
+
+        button#refreshBtn {
+            background-color: #2ecc71;
+            margin-bottom: 15px;
+        }
+        button#refreshBtn:hover { background-color: #27ae60; }
+
+        h2 { color: #2c3e50; margin-top: 30px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        tr:hover { background-color: #d6eaf8; }
+    </style>
+</head>
+<body>
+    <h1>Medicine Reminder</h1>
+
+    <form id="addForm">
+        <input type="text" id="name" placeholder="Medicine Name" required>
+        <input type="text" id="dosage" placeholder="Dosage (e.g., 1 pill)" required>
+        <input type="time" id="time" required>
+        <button type="submit">Add Medicine</button>
+    </form>
+
+    <button id="refreshBtn">Refresh Schedule</button>
+
+    <h2>Medicine Schedule</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Dosage</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody id="scheduleBody">
+            <!-- Medicines from DB will appear here -->
+        </tbody>
+    </table>
+
+    <script>
+        const addForm = document.getElementById('addForm');
+        const scheduleBody = document.getElementById('scheduleBody');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        // Add medicine via Python server
+        addForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const dosage = document.getElementById('dosage').value;
+            const time = document.getElementById('time').value;
+
+            fetch('/add_medicine', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, dosage, time})
+            })
+            .then(res => res.text())
+            .then(msg => {
+                alert(msg);
+                addForm.reset();
+                loadSchedule();
+            })
+            .catch(err => alert("Error: " + err));
+        });
+
+        // Load schedule from Python server
+        function loadSchedule() {
+            fetch('/get_medicines')
+            .then(res => res.json())
+            .then(medicines => {
+                scheduleBody.innerHTML = '';
+                medicines.forEach(med => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${med.id}</td>
+                        <td>${med.name}</td>
+                        <td>${med.dosage}</td>
+                        <td>${med.time}</td>
+                    `;
+                    scheduleBody.appendChild(row);
+                });
+            })
+            .catch(err => console.error("Error fetching medicines:", err));
+        }
+
+        refreshBtn.addEventListener('click', loadSchedule);
+        loadSchedule(); // load on page load
+    </script>
+</body>
+</html>
