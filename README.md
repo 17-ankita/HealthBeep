@@ -17,4 +17,4 @@ It allows users to add medicines with dosage and scheduled times and view them i
 - **Database:** SQLite  
 - **Optional Analytics:** Power BI (if integrated)
 
-RUN - http://localhost:8000/index.html
+RUN - https://17ankita.pythonanywhere.com/
